@@ -1,0 +1,8 @@
+.DS_Store
+Thumbs.db
+desktop.ini
+__MACOSX/
+*.tmp
+_tmp_*
+__pycache__/
+*.pyc
