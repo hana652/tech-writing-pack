@@ -20,12 +20,15 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 | `guides/06-rewriting-prompts.md` | AIに書き直させるプロンプト集 | 下書きを人間っぽく整える |
 | `checklist.md` | 公開前セルフチェック1枚 | 出す前の最終点検 |
 | `scripts/ai-smell-lint.py` | AI臭・コロケーション崩れの機械検出スクリプト | 目視に頼らず必ず捕まえる |
+| `examples/comparison.html` | 📊 同じテーマの Before/After を横並び表示（解説つき） | まず見て理解する入口 |
+| `examples/before.md` / `after.md` | ルール無視版／適用版の記事サンプル | 実例で学ぶ |
 
 ---
 
 ## 読む順番（はじめての人向け）
 
 最初から全部読まなくて大丈夫。下の順で、必要なところだけ。
+（イメージを先につかみたい人は、まず **`examples/comparison.html`** をブラウザで開くのがおすすめ。同じ記事の「AI臭版」と「人間版」を横並びで見られます。）
 
 1. **まずは `guides/01-seo-for-dev-blogs.md`** ── 「誰の何を解決する記事か」を決める。これがSEOの9割
 2. **記事を書くとき `guides/02-article-structures.md`** ── 書く記事のタイプに合うテンプレを選ぶ

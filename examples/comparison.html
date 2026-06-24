@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIっぽい文章 Before / After 比較 — Tech Writing Pack</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#fff; --ink:#23272f; --sub:#5b6472;
+    --before:#e5484d; --before-bg:#fff1f1; --before-soft:#fde7e9;
+    --after:#2a9d6b; --after-bg:#f0faf4;
+    --noa:#d6457f; --noa-bg:#fff0f6;
+    --line:#e6e8ec;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+    line-height:1.85; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:32px 20px 80px}
+  header.page{text-align:center; margin-bottom:8px}
+  header.page h1{font-size:1.6rem; margin:0 0 6px; letter-spacing:.02em}
+  header.page p{color:var(--sub); margin:0; font-size:.95rem}
+  .theme{display:inline-block; margin-top:14px; background:#23272f; color:#fff;
+    padding:7px 16px; border-radius:999px; font-size:.9rem}
+
+  /* のあ bubble */
+  .noa{
+    display:flex; gap:12px; align-items:flex-start;
+    background:var(--noa-bg); border:1px solid #f5c6dc; border-radius:14px;
+    padding:14px 16px; margin:18px 0; font-size:.93rem;
+  }
+  .noa .ava{flex:0 0 auto; width:34px; height:34px; border-radius:50%;
+    background:linear-gradient(135deg,#ff9ec4,#ffd6a5); display:flex;
+    align-items:center; justify-content:center; font-size:1.1rem}
+  .noa .body{flex:1}
+  .noa .name{font-weight:700; color:var(--noa); font-size:.85rem; margin-bottom:2px}
+  .noa.lead{font-size:.98rem}
+
+  /* legend */
+  .legend{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:18px 0 6px}
+  .legend span{font-size:.78rem; padding:3px 10px; border-radius:6px; background:#fff; border:1px solid var(--line)}
+  .legend b{font-weight:700}
+
+  /* columns */
+  .cols{display:flex; gap:20px; margin-top:18px; align-items:stretch}
+  .col{flex:1 1 0; min-width:0}
+  .card{background:var(--card); border-radius:16px; padding:22px 22px 26px; height:100%;
+    border:1px solid var(--line); box-shadow:0 2px 12px rgba(20,30,50,.04)}
+  .card.before{border-top:5px solid var(--before)}
+  .card.after{border-top:5px solid var(--after)}
+  .badge{display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:.95rem;
+    padding:5px 12px; border-radius:8px; margin-bottom:4px}
+  .badge.before{background:var(--before-bg); color:var(--before)}
+  .badge.after{background:var(--after-bg); color:var(--after)}
+  .verdict{font-size:.8rem; color:var(--sub); margin:6px 0 16px}
+  .art h1{font-size:1.12rem; line-height:1.5; margin:.2em 0 .8em; padding-bottom:.5em; border-bottom:1px dashed var(--line)}
+  .art h2{font-size:1rem; margin:1.4em 0 .5em; color:#111}
+  .art p{margin:.7em 0; font-size:.94rem}
+
+  /* highlight marks (BEFORE) */
+  mark.sx{background:var(--before-soft); color:#7a1f23; padding:.05em .15em; border-radius:3px;
+    position:relative; white-space:normal;}
+  mark.sx .lab{display:inline-block; font-size:.62rem; font-weight:700; color:#fff;
+    background:var(--before); border-radius:4px; padding:0 5px; margin-left:3px; vertical-align:.12em; line-height:1.5; white-space:nowrap}
+  /* good marks (AFTER) */
+  mark.gd{background:#e3f6ec; color:#13623f; padding:.05em .15em; border-radius:3px}
+  mark.gd .lab{display:inline-block; font-size:.62rem; font-weight:700; color:#fff;
+    background:var(--after); border-radius:4px; padding:0 5px; margin-left:3px; vertical-align:.12em; line-height:1.5; white-space:nowrap}
+  .quote-word{color:var(--sub); font-weight:600}
+
+  /* comparison table */
+  h2.sec{font-size:1.2rem; margin:46px 0 12px; text-align:center}
+  table{width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden;
+    box-shadow:0 2px 12px rgba(20,30,50,.04); font-size:.88rem}
+  th,td{padding:11px 13px; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+  th{background:#2b303a; color:#fff; font-weight:600}
+  td.b{color:#a3373b} td.a{color:#1f7a52}
+  tr:last-child td{border-bottom:none}
+  td:first-child{font-weight:600; white-space:nowrap; color:#444}
+
+  /* terminal */
+  .term{background:#11151c; color:#d7dde7; border-radius:12px; padding:18px 20px; margin-top:14px;
+    font-family:"SF Mono",Menlo,Consolas,monospace; font-size:.82rem; line-height:1.7; overflow-x:auto}
+  .term .fa{color:#ff6b6b; font-weight:700}
+  .term .ok{color:#5be59a; font-weight:700}
+  .term .dim{color:#7a8699}
+  .term .hd{color:#ffd479}
+
+  footer{margin-top:48px; text-align:center; color:var(--sub); font-size:.82rem}
+  footer a{color:var(--noa)}
+
+  @media(max-width:760px){
+    .cols{flex-direction:column}
+    header.page h1{font-size:1.3rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>AIっぽい文章は、こう変わる</h1>
+    <p>同じテーマを「ルール無視」と「ルール適用」で書き比べ</p>
+    <div class="theme">テーマ：AIっぽい文章の特徴と、それを防ぐAIライティング</div>
+  </header>
+
+  <div class="noa lead">
+    <div class="ava">🌸</div>
+    <div class="body">
+      <div class="name">のあ</div>
+      左が<b>ルールを無視した版（AI臭全開）</b>、右が<b>ルールを適用した版（人間が書いたみたいに直した版）</b>だよ。
+      同じことを言ってるのに、読んだ感じが全然ちがうの。左の<mark class="sx">ピンクの線</mark>がAI臭ポイント、ラベルで「どの症状か」を出してるから見比べてみて〜✨
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><b>AI臭の主な型：</b></span>
+    <span>偏愛語の擦り倒し（落ちる/設計/本質…）</span>
+    <span>観察断定（〜は、〜だった）</span>
+    <span>じゃない構文</span>
+    <span>メタ発言・章境界</span>
+    <span>ヘッジ・過剰共感</span>
+    <span>記号・テンプレ</span>
+  </div>
+
+  <div class="cols">
+
+    <!-- BEFORE -->
+    <div class="col">
+      <div class="card before">
+        <span class="badge before">❌ ルール無視版（AI臭全開）</span>
+        <div class="verdict">lint判定：🚨 FATALあり ／ 13カテゴリ検出</div>
+        <div class="art">
+          <h1>AIっぽい文章の特徴と、それを防ぐAIライティング</h1>
+
+          <p>最近、多くの人が「自分の文章、なんだかAIっぽい」と悩んでいる。実は、これには明確な理由が<mark class="sx">あった<span class="lab">過去断定</span></mark>。本記事では、AIっぽい文章の特徴と、その対策に<mark class="sx">ついて解説していきます<span class="lab">メタ発言</span></mark>。</p>
+
+          <h2>AIっぽさの正体とは</h2>
+
+          <p>ネットを一通り調べてみたけど、この問題の<mark class="sx">解像度は驚くほど低かった<span class="lab">偏愛語+観察断定</span></mark>。多くの記事は、<mark class="sx">表層で止まっていたのだ<span class="lab">観察断定</span></mark>。</p>
+
+          <p>AIっぽい文章には、共通する「構造」がある。それは、<mark class="sx">思考の設計<span class="lab">偏愛名詞</span></mark>が抜け落ちているという点だ。<mark class="sx">情報が落ち<span class="lab">偏愛動詞</span></mark>、<mark class="sx">書き手の体温<span class="lab">偏愛名詞</span></mark>が消える。<mark class="sx">文章の手触り<span class="lab">偏愛名詞</span></mark>が失われていく<mark class="sx">――<span class="lab">em-dash</span></mark>これこそが、<mark class="sx">AIっぽさの本質なのです<span class="lab">偏愛名詞</span></mark>。</p>
+
+          <p><mark class="sx">大事なのは、テクニックじゃない。マインドセットだ。<span class="lab">じゃない構文</span></mark></p>
+
+          <h2><mark class="sx">特徴を見ていきましょう<span class="lab">メタ発言（見出し）</span></mark></h2>
+
+          <p><mark class="sx">ここからは、具体的な特徴を順番に見ていきます。<span class="lab">章境界アナウンス</span></mark></p>
+
+          <p><mark class="sx">もちろん例外もありますが、一方で共通点も多いと言えるでしょう。<span class="lab">ヘッジ</span></mark>AIっぽい文章は、往々にして次のような<mark class="sx">傾向が見られた<span class="lab">過去形の乱用</span></mark>。語尾が単調になりがち<mark class="sx">ですよね<span class="lab">過剰共感</span></mark>。読んでいてリズムが平坦になってしまう、というのもよくある話。</p>
+
+          <p>つまり、AIっぽさとは「思考の解像度の低さ」が言語化されたもの、<mark class="sx">なのかもしれない<span class="lab">ぼかし語尾</span></mark>。</p>
+
+          <h2>防ぐためのAIライティング</h2>
+
+          <p>では、どうすればいいのか。<mark class="sx">整理します。<span class="lab">章境界</span></mark></p>
+
+          <p>文章に<mark class="sx">血を通わせる<span class="lab">テンプレ比喩</span></mark>ことが、何より<mark class="sx">重要だと言えるでしょう<span class="lab">ヘッジ</span></mark>。具体性という名の<mark class="sx">スパイス<span class="lab">テンプレ比喩</span></mark>を効かせ、あなただけの<mark class="sx">視点を設計<span class="lab">偏愛動詞</span></mark>していく。それは、文章の<mark class="sx">土台を作る営み<span class="lab">テンプレ比喩+偏愛名詞</span></mark>でもあります。</p>
+
+          <p><mark class="sx">いかがでしたか。ぜひ、今日から実践してみてください。<span class="lab">SEOテンプレ定型</span></mark></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div class="col">
+      <div class="card after">
+        <span class="badge after">✅ ルール適用版（人間版）</span>
+        <div class="verdict">lint判定：⚠️表示は出るが、全て"悪い例の引用" → 人の確認で✅合格</div>
+        <div class="art">
+          <h1>AIっぽい文章の特徴と、それを防ぐAIライティング</h1>
+
+          <p>AIに書かせた文章は、<mark class="gd">なぜ一目で「AIっぽい」とわかるのでしょうか。<span class="lab">敬語体で統一</span></mark>先に結論をいうと、原因はたった一つ、「AIには決まったお気に入りの言葉があって、それを場所を選ばず使い回すから」です。</p>
+
+          <h2>なぜAIっぽくなるのか</h2>
+
+          <p>AIはビッグデータが集まってできているという特性を持っているため、確率で次の単語を選ぶように作られています。そのため、学習データでよく出てきた便利な言葉を<mark class="gd">よく使ってしまいがちです。<span class="lab">一文を無理に切らない</span></mark>たとえば、「落ちる」「設計」「本質」「解像度」「手触り」など。このあたりの単語はよく見るのではないでしょうか。</p>
+
+          <p>やっかいなのは、このルールを不自然な場面にまで持ち込むことです。たとえば<mark class="gd">「サーバーが落ちる」という表現はすんなり受け入れられると思います。ですが「情報が落ちる」となると、<span class="lab">実体あり/なしの線引き</span></mark>「あ、これAIが書いたな」と感じるのではないでしょうか。<mark class="gd">自然な単語の組み合わせを“コロケーション”といいますが、<span class="lab">専門用語を定義</span></mark>AIはまさにこのコロケーションが苦手なのです。</p>
+
+          <h2>AIっぽい文章と、人間が書いた文章の見分け方</h2>
+
+          <p>「AIっぽい文章」を防ぎたい場合や、先方から提示された文章がAIによって書かれたものなのかを判断したい場合は、次の3つのポイントを見ればだいたいわかります。</p>
+
+          <p>① コロケーションをうまく成立させられていない<br>
+          ② 「〜は、〜だった」と、まるで調査結果のように過去形で言い切る<br>
+          ③ <mark class="gd">「量じゃない、質だ」のように、文脈に関係なく仮想敵を作って対立構造にしたがる<span class="lab">"じゃない構文"を実例で説明</span></mark>（「〜じゃない」「〜じゃなくて」のフレーズが頻発する）</p>
+
+          <h2>どう防ぐか</h2>
+
+          <p>直し方そのものは、とてもシンプルです。気取った言葉を見つけたら、別のかっこいい言葉に置き換えるのではなく、<mark class="gd">「具体的に何を言いたいのか」に戻してあげましょう。<span class="lab">言い換えず具体に戻す</span></mark></p>
+
+          <p>たとえば「文章に体温を持たせる」と書きたくなったら、「読んだ人が自分のことだと感じられるか」と言い換えてみます。「解像度を上げる」と書きそうになったら、「3行で説明できるところまで削る」と、具体的な行動に置き換えます。大切なのは、おしゃれな比喩で言い換えることではなく、自分が本当に伝えたいことをそのまま書くことです。</p>
+
+          <p><mark class="gd">最後に、ひとつだけ。この記事は、ここまで一つも“お気に入りの言葉”を使わずに書けているでしょうか。それを読み返して確かめるのは、いつだって書き手自身の仕事なのだと思います。<span class="lab">問いで終わる余韻</span></mark></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="noa">
+    <div class="ava">🌸</div>
+    <div class="body">
+      <div class="name">のあ</div>
+      ポイントは、右が<b>「いい言葉に言い換えた」んじゃなくて「具体に戻した」</b>ってこと。
+      左の『血を通わせる』『スパイス』を、別のおしゃれ比喩に替えても結局AI臭は消えないの。
+      右みたいに「読んだ人が自分のことだと感じるか」って<b>中身そのもの</b>を書くと、ふっと人間っぽくなるんだよ💡
+    </div>
+  </div>
+
+  <div class="noa">
+    <div class="ava">🌸</div>
+    <div class="body">
+      <div class="name">のあ</div>
+      もう一つ大事な落とし穴。<b>「一文を短く！」を意識しすぎると、逆にAIっぽくなる</b>の。
+      短くしようとするあまり<b>主語や目的語まで削って</b>「具体に戻す。」みたいなブツ切りになったり、
+      ですます調の中に<b>常体（〜だ／体言止め）がまぎれて文体がちぐはぐ</b>になったりする。
+      人間が書くときは、無理に切らずに主語も敬語もちゃんと残して、自然な長さで書くよ。短文と長文の<b>緩急</b>は付けるけど、緩急のために主語まで消さないのがコツ✨
+    </div>
+  </div>
+
+  <!-- comparison table -->
+  <h2 class="sec">どこを直したか</h2>
+  <table>
+    <tr><th>観点</th><th>❌ 無視版</th><th>✅ 適用版</th></tr>
+    <tr><td>偏愛動詞</td><td class="b">落ちる・通わせる・効かせを擦り倒し</td><td class="a">実体ある「サーバーが落ちる」だけ</td></tr>
+    <tr><td>偏愛名詞</td><td class="b">解像度/設計/本質/体温/手触り/土台 連打</td><td class="a">悪い例として"引用"するだけ</td></tr>
+    <tr><td>観察断定</td><td class="b">〜は表層で止まっていたのだ／見られた</td><td class="a">現在形で言い切り</td></tr>
+    <tr><td>じゃない構文</td><td class="b">テクニックじゃない。マインドセットだ。</td><td class="a">不使用</td></tr>
+    <tr><td>メタ・章境界</td><td class="b">解説していきます／ここからは／整理します</td><td class="a">本題から入る</td></tr>
+    <tr><td>ヘッジ・共感</td><td class="b">もちろん〜一方で〜でしょう／ですよね</td><td class="a">言い切り</td></tr>
+    <tr><td>記号・テンプレ</td><td class="b">――（em-dash）／いかがでしたか／ぜひ</td><td class="a">不使用</td></tr>
+    <tr><td>リズム</td><td class="b">均一でダラダラ</td><td class="a">長短の緩急＋問いで余韻</td></tr>
+    <tr><td>文体</td><td class="b">である調にですますが混入（ちぐはぐ）</td><td class="a">ですます調で最後まで統一</td></tr>
+    <tr><td>主語・目的語</td><td class="b">—</td><td class="a">短くしすぎず、省略しない（ブツ切り回避）</td></tr>
+  </table>
+
+  <!-- lint terminal -->
+  <h2 class="sec">機械チェック（ai-smell-lint.py）の結果</h2>
+  <div class="term">
+<span class="hd">######## BEFORE（ルール無視）########</span>
+  <span class="fa">🚨FATAL</span> ⑫章境界アナウンス: 3件
+  <span class="fa">🚨FATAL</span> ⑬テンプレ比喩: 1件
+  ⚠️warn ①ヘッジ / ②メタ発言 / ③テンプレ定型 / ④過剰共感 / ⑧否定対比
+  ⚠️warn ⑩エモ抽象化 / ⑪ぼかし語尾 / ⑭過去形 / AI偏愛動詞 / AI偏愛名詞 / システム語
+  <span class="dim">--- 判定: 🚨 FATALあり（公開前に修正）</span>
+
+<span class="hd">######## AFTER（ルール適用）########</span>
+  <span class="fa">🚨FATAL</span> ⑧否定対比  <span class="dim">←「量じゃない、質だ」を"悪い例として引用"してるだけ</span>
+  ⚠️warn ⑩エモ抽象化 / AI偏愛動詞 / AI偏愛名詞  <span class="dim">←「落ちる」「設計」「解像度」も引用</span>
+  <span class="dim">表示上はFATAL。でも全て mention（言及）であって use（使用）ではない</span>
+  <span class="ok">--- 人が「引用だからOK」と確認 → ✅ 合格</span>
+  </div>
+
+  <div class="noa">
+    <div class="ava">🌸</div>
+    <div class="body">
+      <div class="name">のあ</div>
+      右側、実はlintだと <b>🚨FATAL が出ちゃう</b>の。でもこれ全部、本文が<b>「量じゃない、質だ」「落ちる」「設計」を"悪い例として引用"してるだけ</b>で、AI臭として使ってるわけじゃない。
+      つまり<b>機械は「候補」を出すだけ。"使ってる(use)"のか"言ってる(mention)"のかは人が判断する</b>──ここが lint の正しい使い方だよ。
+      表示がFATALでも、中身を見て「これは引用だからOK」と切れば合格。<b>機械の表示＝最終判定じゃない</b>のがポイント✨
+    </div>
+  </div>
+
+  <footer>
+    Tech Writing Pack — <a href="https://github.com/hana652/tech-writing-pack">github.com/hana652/tech-writing-pack</a><br>
+    作文ルール正本：guides/04-collocation.md（AI偏愛語大全）／チェック：scripts/ai-smell-lint.py
+  </footer>
+
+</div>
+</body>
+</html>
