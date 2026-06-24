@@ -15,7 +15,7 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 | `guides/01-seo-for-dev-blogs.md` | 技術ブログのSEO（KW選定・記事構成・内部リンク・計測） | 読まれる記事の設計 |
 | `guides/02-article-structures.md` | 記事型テンプレ（チュートリアル/解説/トラブル解決/比較） | 構成で迷わない |
 | `guides/03-anti-ai.md` | AI臭除去（5つの不在＋14症状＋NG表現） | 機械っぽさを消す |
-| `guides/04-collocation.md` | **コロケーション崩れ大全**（語の結びつきの誤り） | AI日本語の不自然さを直す |
+| `guides/04-collocation.md` | **コロケーション崩れ・AI偏愛語大全**（落ちる/壊れる/設計/本質… の擦り倒し＋語の結びつきの誤り） | AI日本語の不自然さを直す |
 | `guides/05-technical-writing.md` | テクニカルライティング（一文一意・正確に書く） | 正確に・無駄なく伝える |
 | `guides/06-rewriting-prompts.md` | AIに書き直させるプロンプト集 | 下書きを人間っぽく整える |
 | `checklist.md` | 公開前セルフチェック1枚 | 出す前の最終点検 |
