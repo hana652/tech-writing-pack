@@ -2,22 +2,34 @@
 """
 ai-smell-lint: 技術ブログ記事のAI臭症状とコロケーション崩れを機械検出する。
 
-guides/03-anti-ai.md の症状①〜⑭ と guides/04-collocation.md のコロケーション崩れに
+guides/03-anti-ai.md の症状①〜⑮ と guides/04-collocation.md のコロケーション崩れに
 対応した正規表現で、記事(Markdown/HTML)をスキャンし、症状別に検出箇所を出力する。
 目視に頼らず「候補を必ず拾う」ためのゲート。
 
 使い方:
   python3 ai-smell-lint.py <記事.md|.html> [<記事2> ...]
+  python3 ai-smell-lint.py --strict <記事.md>   # mention も警告として数える（厳格モード）
 
 終了コード:
   0 = 致命症状(fatal)なし（warnのみ or クリーン）
   1 = 致命症状あり（記号NG / ⑫章境界 / ⑬テンプレ比喩 / ⑧否定対比が2回以上）
       → 直してから公開する
 
+use と mention の区別（このツールの肝）:
+  AI臭の語やNG構文を「自分の文章で使う(use)」のと、「悪い例として引用する(mention)」のは
+  まったく別物。前者だけがAI臭で、後者は良い記事にむしろ必要（→ guides/03-anti-ai.md
+  「引用(mention)と使用(use)の区別」）。このツールは検出した語が次のどちらかに当たるとき、
+  📎mention（引用・例示の可能性）として FATAL/warn 判定から自動で除外する:
+    1. 引用符（「」『』""【】《》〝〟）の中にある
+    2. 同じ行に「悪い例」「お気に入りの言葉」「たとえば〜」など、語そのものを話題に
+       するマーカーがある
+  ただし機械判定は完璧ではない。📎mention でも地の文で実際に使っていれば直すべきだし、
+  FATAL でも中身が引用なら合格にしてよい。最終判断は人。
+
 注意:
   - コードブロック(``` ```)・インラインコード(`...`)は検査対象から除外する
     （コード内の記号や英単語を誤検出しないため）
-  - grep困難な症状③(均等対称)・⑦(助詞省略)は機械検出できない → 目視で確認
+  - grep困難な症状③(均等対称)・⑦(助詞省略)・⑮(短文化/常体落ち)は機械検出できない → 目視で確認
   - 検出は「候補」。正当な文脈（記事タイトルの「設計」など）は人が最終判断する
 """
 import sys
@@ -70,6 +82,62 @@ REDUNDANT_RE = [
 
 HEADING_RE = re.compile(r'<h[1-6]|^\s*#{1,6}\s')
 
+# --- use/mention 判定 ---------------------------------------------------------
+# 開き→閉じが別文字の引用符ペア（ASCIIの " ＂ は同一文字なので別処理）
+QUOTE_PAIRS = {'「': '」', '『': '』', '“': '”', '‘': '’', '【': '】', '《': '》', '〈': '〉', '〝': '〟'}
+QUOTE_CLOSERS = set(QUOTE_PAIRS.values())
+
+# 同じ行にあると「語そのものを話題にしている（引用・例示）」とみなすマーカー。
+# 保守的に「語を引いていることが明白なもの」だけに絞る（地の文の通常使用を巻き込まないため）。
+META_MARKERS = [
+    '悪い例', '悪例', 'NG例', 'NG表現', '禁止語', 'お気に入りの言葉', '偏愛語',
+    'という表現', 'という言葉', 'といった言葉', 'という単語', 'といったフレーズ',
+    'と書きたくなっ', 'と書きそうになっ', 'を擦り倒', 'を多用', 'の連発', 'が頻発',
+    'たとえば「', '例えば「', '例として', '〜は', 'のように書',
+]
+
+
+def quote_spans(line):
+    """行内の引用符で囲まれた範囲を [(start, end), ...] で返す（endは閉じ括弧の次）。"""
+    spans = []
+    stack = []          # [(期待する閉じ括弧, 開始index), ...]
+    dq_open = False     # ASCIIダブルクオートのトグル
+    dq_start = 0
+    for i, ch in enumerate(line):
+        if ch == '"' or ch == '＂':
+            if not dq_open:
+                dq_open, dq_start = True, i
+            else:
+                spans.append((dq_start, i + 1))
+                dq_open = False
+        elif ch in QUOTE_PAIRS:
+            stack.append((QUOTE_PAIRS[ch], i))
+        elif ch in QUOTE_CLOSERS and stack and ch == stack[-1][0]:
+            _, s = stack.pop()
+            spans.append((s, i + 1))
+    return spans
+
+
+def in_spans(pos, spans):
+    return any(s <= pos < e for s, e in spans)
+
+
+def classify(pos, spans, has_meta):
+    """検出位置が use か mention かを返す。引用符内 or メタ行 → mention。"""
+    return 'mention' if (in_spans(pos, spans) or has_meta) else 'use'
+
+
+def find_positions(text, pat):
+    """text 中の pat の全出現開始位置を返す。"""
+    out, start = [], 0
+    while True:
+        idx = text.find(pat, start)
+        if idx < 0:
+            break
+        out.append(idx)
+        start = idx + 1
+    return out
+
 
 def strip_code_and_tags(text: str):
     """fencedコードブロック・インラインコード・style/scriptを空白化し（行数維持）、各行のHTMLタグを除く。"""
@@ -91,7 +159,7 @@ def strip_code_and_tags(text: str):
     return out
 
 
-def lint_file(path: str):
+def lint_file(path: str, strict: bool = False):
     try:
         raw = open(path, encoding='utf-8').read()
     except Exception as e:
@@ -99,56 +167,96 @@ def lint_file(path: str):
         return 2
     lines = strip_code_and_tags(raw)
 
-    findings = {}  # 症状 -> [(lineno, text, is_heading)]
+    # 症状 -> [(lineno, text, is_heading, kind)]  kind: 'use' / 'mention'
+    findings = {}
+
+    def add(sym, lineno, txt, is_head, kind):
+        findings.setdefault(sym, []).append((lineno, txt.strip()[:80], is_head, kind))
+
     for i, (txt, is_head) in enumerate(lines, 1):
+        spans = quote_spans(txt)
+        has_meta = any(m in txt for m in META_MARKERS)
+
         for sym, (pats, sev) in SYMPTOMS.items():
             if sym == 'CO重言':
                 continue  # 「約」「各」「を投げる例外」の単純包含は誤検出多→ REDUNDANT_RE で判定
             for p in pats:
-                if p in txt:
-                    findings.setdefault(sym, []).append((i, txt.strip()[:80], is_head))
+                for pos in find_positions(txt, p):
+                    add(sym, i, txt, is_head, classify(pos, spans, has_meta))
+
         for rgx, label in REDUNDANT_RE:
-            if rgx.search(txt):
-                findings.setdefault(label, []).append((i, txt.strip()[:80], is_head))
+            for m in rgx.finditer(txt):
+                add(label, i, txt, is_head, classify(m.start(), spans, has_meta))
+
         # CO重言の単純語（まず最初に等。「約」「各」を除いた分）
         for p in ['まず最初に', '一番最初', '必ず必要', '後で後悔', '違和感を感じ', '過半数を超え']:
-            if p in txt:
-                findings.setdefault('CO重言', []).append((i, txt.strip()[:80], is_head))
+            for pos in find_positions(txt, p):
+                add('CO重言', i, txt, is_head, classify(pos, spans, has_meta))
 
     SEV = {k: v[1] for k, v in SYMPTOMS.items()}
     fatal = False
+    use_total = men_total = 0
     print(f"\n===== ai-smell-lint: {path} =====")
     if not findings:
         print("  ✅ クリーン（機械検出される症状なし）")
+
     for sym in list(SYMPTOMS.keys()) + [l for _, l in REDUNDANT_RE]:
         hits = findings.get(sym, [])
         if not hits:
             continue
-        n = len(hits)
-        head_hit = any(h[2] for h in hits)
+        use_hits = [h for h in hits if h[3] == 'use']
+        men_hits = [h for h in hits if h[3] == 'mention']
         sev = SEV.get(sym, 'warn')
-        is_fatal = (sev == 'fatal') or (sev == 'fatal2' and n >= 2) or (sym == '⑧否定対比構文' and head_hit) or ('記号NG' in sym and head_hit)
-        mark = '🚨FATAL' if is_fatal else '⚠️warn'
+
+        # strictモードでは mention も use と同様に扱う
+        judged = (use_hits + men_hits) if strict else use_hits
+        n = len(judged)
+        head_hit = any(h[2] for h in judged)
+        is_fatal = (
+            (sev == 'fatal' and n >= 1)
+            or (sev == 'fatal2' and n >= 2)
+            or (sym == '⑧否定対比構文' and head_hit and n >= 1)
+            or ('記号NG' in sym and head_hit and n >= 1)
+        )
         if is_fatal:
             fatal = True
-        print(f"  {mark} {sym}: {n}件")
-        for (lineno, t, ih) in hits[:5]:
-            tag = '[見出し]' if ih else ''
-            print(f"      L{lineno}{tag}: {t}")
+
+        if use_hits:
+            use_total += len(use_hits)
+            mark = '🚨FATAL' if is_fatal else '⚠️warn'
+            print(f"  {mark} {sym}: {len(use_hits)}件(use)")
+            for (lineno, t, ih, _) in use_hits[:5]:
+                tag = '[見出し]' if ih else ''
+                print(f"      L{lineno}{tag}: {t}")
+        if men_hits:
+            men_total += len(men_hits)
+            tag_strict = '（strict: 判定対象）' if strict else '（判定から除外・要人確認）'
+            print(f"  📎mention {sym}: {len(men_hits)}件 〔引用/例示の可能性{tag_strict}〕")
+            for (lineno, t, ih, _) in men_hits[:5]:
+                tag = '[見出し]' if ih else ''
+                print(f"      L{lineno}{tag}: {t}")
+
+    print(f"  --- 集計: use {use_total}件 / 📎mention {men_total}件")
     print(f"  --- 判定: {'🚨 FATALあり（公開前に修正）' if fatal else '✅ 致命なし（warnは目視で要否判断）'}")
     print("  ※ コードブロック・インラインコードは検査対象外。")
-    print("  ※ 症状③均等対称・⑦助詞省略は機械検出外。目視で確認。")
+    print("  ※ 📎mention＝引用符内 or「悪い例/たとえば」等のメタ行。引用なら直さず合格。地の文で使っていれば手で直す。")
+    print("  ※ 症状③均等対称・⑦助詞省略・⑮短文化/常体落ちは機械検出外。目視で確認。")
     print("  ※ COはコロケーション崩れ候補。正当な文脈もあるので最終判断は人。")
     return 1 if fatal else 0
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("usage: python3 ai-smell-lint.py <article.md|.html> [...]")
+    args = sys.argv[1:]
+    strict = False
+    if '--strict' in args:
+        strict = True
+        args = [a for a in args if a != '--strict']
+    if not args:
+        print("usage: python3 ai-smell-lint.py [--strict] <article.md|.html> [...]")
         sys.exit(2)
     rc = 0
-    for path in sys.argv[1:]:
-        rc = max(rc, lint_file(path))
+    for path in args:
+        rc = max(rc, lint_file(path, strict=strict))
     sys.exit(rc)
 
 

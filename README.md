@@ -17,12 +17,12 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 |---|---|---|
 | `guides/01-seo-for-dev-blogs.md` | 技術ブログのSEO（KW選定・記事構成・内部リンク・計測） | 読まれる記事の設計 |
 | `guides/02-article-structures.md` | 記事型テンプレ（チュートリアル/解説/トラブル解決/比較） | 構成で迷わない |
-| `guides/03-anti-ai.md` | AI臭除去（5つの不在＋14症状＋NG表現） | 機械っぽさを消す |
+| `guides/03-anti-ai.md` | AI臭除去（5つの不在＋15症状＋NG表現＋引用/使用の区別） | 機械っぽさを消す |
 | `guides/04-collocation.md` | **コロケーション崩れ・AI偏愛語大全**（落ちる/壊れる/設計/本質… の擦り倒し＋語の結びつきの誤り） | AI日本語の不自然さを直す |
 | `guides/05-technical-writing.md` | テクニカルライティング（一文一意・正確に書く） | 正確に・無駄なく伝える |
 | `guides/06-rewriting-prompts.md` | AIに書き直させるプロンプト集 | 下書きを人間っぽく整える |
 | `checklist.md` | 公開前セルフチェック1枚 | 出す前の最終点検 |
-| `scripts/ai-smell-lint.py` | AI臭・コロケーション崩れの機械検出スクリプト | 目視に頼らず必ず捕まえる |
+| `scripts/ai-smell-lint.py` | AI臭・コロケーション崩れの機械検出スクリプト（use=使用／📎mention=引用 を自動判定） | 目視に頼らず必ず捕まえる |
 | `examples/comparison.html` | 📊 同じテーマの Before/After を横並び表示（解説つき） | まず見て理解する入口 |
 | `examples/before.md` / `after.md` | ルール無視版／適用版の記事サンプル | 実例で学ぶ |
 

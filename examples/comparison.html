@@ -168,7 +168,7 @@
     <div class="col">
       <div class="card after">
         <span class="badge after">✅ ルール適用版（人間版）</span>
-        <div class="verdict">lint判定：⚠️表示は出るが、全て"悪い例の引用" → 人の確認で✅合格</div>
+        <div class="verdict">lint判定：✅合格（FATAL 0／偏愛語は📎mention＝引用として自動除外）</div>
         <div class="art">
           <h1>AIっぽい文章の特徴と、それを防ぐAIライティング</h1>
 
@@ -240,28 +240,33 @@
 
   <!-- lint terminal -->
   <h2 class="sec">機械チェック（ai-smell-lint.py）の結果</h2>
+  <p style="text-align:center; color:var(--sub); font-size:.86rem; margin:0 0 6px">
+    lintは検出語が <b>use（地の文で使用）</b> か <b>📎mention（引用・例示）</b> かを自動で判定し、mentionは判定から除外する。</p>
   <div class="term">
 <span class="hd">######## BEFORE（ルール無視）########</span>
-  <span class="fa">🚨FATAL</span> ⑫章境界アナウンス: 3件
-  <span class="fa">🚨FATAL</span> ⑬テンプレ比喩: 1件
-  ⚠️warn ①ヘッジ / ②メタ発言 / ③テンプレ定型 / ④過剰共感 / ⑧否定対比
-  ⚠️warn ⑩エモ抽象化 / ⑪ぼかし語尾 / ⑭過去形 / AI偏愛動詞 / AI偏愛名詞 / システム語
+  <span class="fa">🚨FATAL</span> ⑫章境界アナウンス: 3件(use)
+  <span class="fa">🚨FATAL</span> ⑬テンプレ比喩: 1件(use)
+  ⚠️warn ①ヘッジ / ②メタ発言 / ③テンプレ定型 / ④過剰共感 / ⑧否定対比 (use)
+  ⚠️warn ⑩エモ抽象化 / ⑪ぼかし語尾 / ⑭過去形 / AI偏愛動詞 / AI偏愛名詞 (use)
+  <span class="dim">--- 集計: use 18件 / 📎mention 1件</span>
   <span class="dim">--- 判定: 🚨 FATALあり（公開前に修正）</span>
 
 <span class="hd">######## AFTER（ルール適用）########</span>
-  <span class="fa">🚨FATAL</span> ⑧否定対比  <span class="dim">←「量じゃない、質だ」を"悪い例として引用"してるだけ</span>
-  ⚠️warn ⑩エモ抽象化 / AI偏愛動詞 / AI偏愛名詞  <span class="dim">←「落ちる」「設計」「解像度」も引用</span>
-  <span class="dim">表示上はFATAL。でも全て mention（言及）であって use（使用）ではない</span>
-  <span class="ok">--- 人が「引用だからOK」と確認 → ✅ 合格</span>
+  ⚠️warn ⑧否定対比構文: 1件(use)  <span class="dim">←「のではなく」を1回だけ地の文で使用（warn・許容範囲）</span>
+  📎mention ⑧否定対比構文: 2件 <span class="dim">〔引用〕←「量じゃない、質だ」は悪い例として引用</span>
+  📎mention AI偏愛名詞: 3件     <span class="dim">〔引用〕←「落ちる」「設計」「解像度」は引用 → 自動除外</span>
+  📎mention ⑩エモ抽象化 / AI偏愛動詞  <span class="dim">〔引用〕←「手触り」「情報が落ちる」も引用</span>
+  <span class="dim">--- 集計: use 2件 / 📎mention 8件</span>
+  <span class="ok">--- 判定: ✅ 致命なし（FATAL 0）</span>
   </div>
 
   <div class="noa">
     <div class="ava">🌸</div>
     <div class="body">
       <div class="name">のあ</div>
-      右側、実はlintだと <b>🚨FATAL が出ちゃう</b>の。でもこれ全部、本文が<b>「量じゃない、質だ」「落ちる」「設計」を"悪い例として引用"してるだけ</b>で、AI臭として使ってるわけじゃない。
-      つまり<b>機械は「候補」を出すだけ。"使ってる(use)"のか"言ってる(mention)"のかは人が判断する</b>──ここが lint の正しい使い方だよ。
-      表示がFATALでも、中身を見て「これは引用だからOK」と切れば合格。<b>機械の表示＝最終判定じゃない</b>のがポイント✨
+      右側に出てくる「量じゃない、質だ」「落ちる」「設計」は、全部<b>"悪い例として引用してるだけ"</b>で、AI臭として使ってるわけじゃないの。
+      ここがこのパックの肝で、lintは<b>引用符の中や「悪い例」「偏愛語」みたいなマーカーがある検出を、自動で📎mentionに分類して判定から外す</b>ようにしたよ。だから引用だらけのこの記事でも、ちゃんと<b>✅合格（FATAL 0）</b>になるの。
+      それでも<b>"使ってる(use)"のか"言ってる(mention)"のかの最終判断は人</b>。📎mentionでも地の文で本当に使ってたら直すし、逆もね。厳しめに見たいときは <code>--strict</code> でmentionも数えられるよ✨
     </div>
   </div>
 
