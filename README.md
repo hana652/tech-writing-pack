@@ -9,6 +9,8 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 > 📊 **まずはこれを見るのがおすすめ**：同じ記事の「AI臭版」と「人間版」を横並びで比較
 > → **https://hana652.github.io/tech-writing-pack/examples/comparison.html**
 
+> 🆕 **2026-07 大型追加**: AI文体を「NG表現の有無」ではなく**密度（人間上限の3〜8倍という出現頻度）**で捉え直した六法則＋実務ルールセット＋AI執筆マニュアル（`guides/07〜10`）と、その機械実装 `scripts/writing-lint.py` を追加。禁止辞書アプローチ（03・04）の上位レイヤーです。
+
 ---
 
 ## 何が入っているか
@@ -21,8 +23,13 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 | `guides/04-collocation.md` | **コロケーション崩れ・AI偏愛語大全**（落ちる/壊れる/設計/本質… の擦り倒し＋語の結びつきの誤り） | AI日本語の不自然さを直す |
 | `guides/05-technical-writing.md` | テクニカルライティング（一文一意・正確に書く） | 正確に・無駄なく伝える |
 | `guides/06-rewriting-prompts.md` | AIに書き直させるプロンプト集 | 下書きを人間っぽく整える |
+| `guides/07-ai-buntai-laws.md` | 🆕 **AI日本語文体の六法則**（密度・二重供給・律儀さ・具体性の演出・遵守の副作用・指紋）。5検体の実地校閲から帰納 | 「なぜAIっぽくなるか」の原理 |
+| `guides/08-ai-buntai-ruleset.md` | 🆕 検出・修正の実務ルール完全版（転用動詞28語・構文14種・**密度基準総表**・レジスター別強度） | 密度ベースの校閲実務 |
+| `guides/09-ai-writing-manual.md` | 🆕 AI執筆マニュアル（プロンプト設計7点セット＋コピペ用文体規約 → 機械チェック → 人間校閲5点 → SEO/AIO観点） | AIに書かせる作業の運用手順 |
+| `guides/10-ai-buntai-handoff.md` | 🆕 単体自己完結の引き継ぎ書。**GPT系・Gemini系など他モデルで校閲・生成する手順**込み | 別環境・別モデルへの導入 |
 | `checklist.md` | 公開前セルフチェック1枚 | 出す前の最終点検 |
 | `scripts/ai-smell-lint.py` | AI臭・コロケーション崩れの機械検出スクリプト（use=使用／📎mention=引用 を自動判定） | 目視に頼らず必ず捕まえる |
+| `scripts/writing-lint.py` | 🆕 **密度カウンタ実装**（対比構文・指紋・三連反復・文体混在・転用ペアをレジスター別閾値で判定＋高頻度転用動詞のWATCH参考カウント） | 08のルールを機械で回す |
 | `examples/comparison.html` | 📊 同じテーマの Before/After を横並び表示（解説つき） | まず見て理解する入口 |
 | `examples/before.md` / `after.md` | ルール無視版／適用版の記事サンプル | 実例で学ぶ |
 
@@ -39,6 +46,9 @@ ChatGPT / Claude が生成した日本語でいちばん不自然になりやす
 4. **正確さが気になったら `guides/05-technical-writing.md`** ── コードの説明・手順の正確さはここ
 5. **直すとき `guides/06-rewriting-prompts.md`** ── AIに直させるプロンプトをコピペで使う
 6. **公開前に `checklist.md`** ── 1枚で最終チェック
+
+7. **原理まで知りたくなったら `guides/07-ai-buntai-laws.md`** ── AIっぽさの根本原因は「誤用」でなく「密度」。ここが腹落ちすると03・04の使い方が変わる
+8. **本格運用するなら `guides/08`（密度ルール）＋ `guides/09`（AI執筆マニュアル）＋ `scripts/writing-lint.py`** ── 書かせる前のプロンプトから公開前の機械チェックまで一気通貫
 
 迷ったら **「01 → 03 → 04 → checklist」** の最短ルートだけでも効果あり。
 
@@ -81,6 +91,23 @@ python3 scripts/ai-smell-lint.py posts/*.md
 - 終了コード `1` ＝ 致命症状あり（記号NG / 章境界アナウンス等）。直してから公開
 
 スクリプトはあくまで**候補を出す道具**。最終判断は人がやってください。正当な文脈（コード内の `—` など）を誤検出することもあります。
+
+### 密度カウンタ版（writing-lint.py・🆕）
+
+```bash
+# 標準（技術記事・SEO記事）
+python3 scripts/writing-lint.py article.md
+
+# クライアント納品文書（閾値が半分に厳格化）／X・note長文（2倍に緩和）
+python3 scripts/writing-lint.py report.md --register deliverable
+python3 scripts/writing-lint.py post.md --register buzz
+```
+
+- **FATAL**（慣用句混交等）＝直すまで公開しない ／ **DENSITY超過**＝上限まで**間引く**（全削除しない）
+- **WATCH** は「落ちる・回す・流す」など正当用法も多い転用動詞の参考カウント。違反扱いにはせず、転用か実体ある用法かを目視で判断する
+- 冒頭の `PERSONAL_NAMES` に固有名詞を足すと、納品物への名前混入も検出できます
+
+> 🔍 面白い実例: このリポジトリの `examples/after.md`（語彙層ルール適用済みの"人間らしい版"）にこのlintをかけると、**対比構文3回で密度超過**になります。偏愛語を消しても密度の癖は別に残る——という六法則（`07`）の主張を、このリポジトリ自身が実証しています。
 
 ---
 
