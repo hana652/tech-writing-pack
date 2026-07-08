@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """writing-lint.py v2 — 決定的な機械校閲（/kouetsu STEP2の実体）
 
+v2.4 (2026-07-08): コードフェンス（``` 〜 ```）内を全カウンタから除外。ツリー図の罫線─が
+B-5ダッシュに、コード内文字列が各カウンタに誤ヒットするため（v2.3の箇条書き除外と同方向）。
 v2.3 (2026-07-07): mention除外（短い「」引用は密度カウンタから除く）＋箇条書き・見出し行を
 B-2/B-10の文抽出から除外（リストの並列・常体は正当なため）。
 v2.2: A-1転用ペア（確定的な名詞×動詞結合・1,000字1回）＋WATCH（落ちる/回す/流す等の
@@ -103,12 +105,27 @@ KEITAI_RE = re.compile(r"(です|ます|ません|でした|ました|でしょ�
 JOUTAI_RE = re.compile(r"(だ|である|だった|する|した|ない|だろう|しよう|くる|いる|ある|れる)$")
 
 
+CODE_FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+
+
+def mask_code_fences(lines: list[str]) -> list[str]:
+    """コードフェンス内を空行化（行番号は維持）。図・コード・コマンドは文章密度の対象外"""
+    out, in_fence = [], False
+    for ln in lines:
+        if CODE_FENCE_RE.match(ln):
+            in_fence = not in_fence
+            out.append("")
+            continue
+        out.append("" if in_fence else ln)
+    return out
+
+
 def load_lines(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8", errors="replace")
     if path.suffix.lower() in (".html", ".htm"):
         text = SCRIPT_STYLE_RE.sub(lambda m: "\n" * m.group(0).count("\n"), text)
         return [TAG_RE.sub("", ln) for ln in text.splitlines()]
-    return text.splitlines()
+    return mask_code_fences(text.splitlines())
 
 
 def scan(lines, patterns, regex=True):
